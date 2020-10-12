@@ -4,7 +4,12 @@ const tasksService = require('./tasks.service');
 
 router.route('/').get(async (req, res) => {
   try {
-    const tasks = await tasksService.getAll(req.params.boardId);
+    const {
+      params: { boardId }
+    } = req;
+
+    const tasks = await tasksService.getAll(boardId);
+
     return res.status(200).send(tasks);
   } catch (error) {
     return res.status(404).send('Tasks not found');
@@ -13,44 +18,63 @@ router.route('/').get(async (req, res) => {
 
 router.route('/:taskId').get(async (req, res) => {
   try {
-    const task = await tasksService.getById(req.params.taskId);
+    const {
+      params: { taskId }
+    } = req;
+
+    const task = await tasksService.getById(taskId);
+
     return res.status(200).send(task);
   } catch (error) {
-    return res.status(404).send(error.message);
+    const { message } = error;
+    return res.status(404).send(message);
   }
 });
 
 router.route('/').post(async (req, res) => {
   try {
-    const { boardId } = req.params;
-    const { title, description, order, userId, columnId } = req.body;
+    const {
+      body,
+      params: { boardId }
+    } = req;
 
-    const task = await tasksService.create(
-      new Task({ title, description, order, userId, columnId, boardId })
-    );
+    const task = await tasksService.create(new Task({ ...body, boardId }));
 
     return res.status(200).send(task);
   } catch (error) {
-    return res.status(400).send(error.message);
+    const { message } = error;
+    return res.status(400).send(message);
   }
 });
 
 router.route('/:taskId').put(async (req, res) => {
   try {
-    const task = await tasksService.update(req.params.taskId, req.body);
-    res.status(200).send(task);
-  } catch (err) {
-    res.status(400).send(err.message);
+    const {
+      body,
+      params: { taskId }
+    } = req;
+
+    const task = await tasksService.update(taskId, body);
+
+    return res.status(200).send(task);
+  } catch (error) {
+    const { message } = error;
+    return res.status(400).send(message);
   }
 });
 
 router.route('/:taskId').delete(async (req, res) => {
   try {
-    const { taskId } = req.params;
+    const {
+      params: { taskId }
+    } = req;
+
     await tasksService.remove(taskId);
-    res.status(204).send('OK');
-  } catch (err) {
-    res.status(404).send(err.message);
+
+    return res.status(204).send('OK');
+  } catch (error) {
+    const { message } = error;
+    return res.status(404).send(message);
   }
 });
 

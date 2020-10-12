@@ -17,6 +17,7 @@ router.route('/:id').get(async (req, res) => {
     const {
       params: { id }
     } = req;
+
     const board = await boardsService.getById(id);
 
     return res.status(200).send(board);
@@ -29,6 +30,7 @@ router.route('/:id').get(async (req, res) => {
 router.route('/').post(async (req, res) => {
   try {
     const { body } = req;
+
     const board = await boardsService.create(new Board({ ...body }));
 
     return res.status(200).send(board);
@@ -44,6 +46,7 @@ router.route('/:id').put(async (req, res) => {
       body,
       params: { id }
     } = req;
+
     const board = await boardsService.update(id, body);
 
     return res.status(200).send(board);
@@ -58,6 +61,7 @@ router.route('/:id').delete(async (req, res) => {
     const {
       params: { id }
     } = req;
+
     const board = await boardsService.remove(id);
 
     return res.status(204).send(board);
