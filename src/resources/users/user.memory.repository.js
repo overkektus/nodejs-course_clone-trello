@@ -1,37 +1,36 @@
-const DB = require('../../common/db/users');
+const httpErrors = require('http-errors');
+const DB = require('../../common/db/inMemoryDB');
 
-const getAll = async () => await DB.getAllUsers();
+const TABLE_NAME = 'Users';
+
+const getAll = async () => await DB.getAllTable(TABLE_NAME);
 
 const getById = async id => {
-  const user = await DB.getUser(id);
+  const entity = await DB.getEntityById(TABLE_NAME, id);
 
-  if (!user) throw new Error(`The user with id ${id} was not found`);
+  if (!entity) {
+    throw new httpErrors.NotFound(`The user with id ${id} was not found`);
+  }
 
-  return user;
+  return entity;
 };
 
-const create = async user => {
-  const newUser = await DB.createUser(user);
-
-  if (!newUser) throw new Error(`Could not create user with id ${user.id}`);
-
-  return newUser;
-};
+const create = async user => await DB.addEntity(TABLE_NAME, user);
 
 const update = async (id, data) => {
-  const user = await DB.updateUser(id, data);
+  const updatedUser = await DB.updateEntity(TABLE_NAME, id, data);
 
-  if (!user) throw new Error('Could not update user with id ${id}');
+  if (!updatedUser) {
+    throw new httpErrors.NotFound(`The user with id ${id} was not found`);
+  }
 
-  return user;
+  return updatedUser;
 };
 
 const remove = async id => {
-  const user = await DB.removeUser(id);
-
-  if (!user) throw new Error('Could not remove user with id ${id}');
-
-  return user;
+  if (!(await DB.deleteEntity(TABLE_NAME, id))) {
+    throw new httpErrors.NotFound(`Could not remove user with id ${id}`);
+  }
 };
 
 module.exports = { getAll, getById, create, update, remove };

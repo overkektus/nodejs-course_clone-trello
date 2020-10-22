@@ -1,35 +1,38 @@
-const DB = require('../../common/db/boards');
+const httpErrors = require('http-errors');
+const DB = require('../../common/db/inMemoryDB');
 
-const getAll = async () => await DB.getAllBoards();
+const TABLE_NAME = 'Boards';
+
+const getAll = async () => await DB.getAllTable(TABLE_NAME);
 
 const getById = async id => {
-  const board = await DB.getBoard(id);
+  const entity = await DB.getEntityById(TABLE_NAME, id);
 
-  if (!board) throw new Error(`The board with id ${id} was not found`);
+  if (!entity) {
+    throw new httpErrors.NotFound();
+  }
 
-  return board;
+  return entity;
 };
 
-const create = async board => {
-  const newBoard = await DB.createBoard(board);
-
-  if (!newBoard) throw new Error(`Could not create board with id ${board.id}`);
-
-  return newBoard;
-};
+const create = async board => await DB.addEntity(TABLE_NAME, board);
 
 const update = async (id, data) => {
-  const board = await DB.updateBoard(id, data);
+  const updatedBoard = await DB.updateEntity(TABLE_NAME, id, data);
 
-  if (!board) throw new Error('Could not update board with id ${id}');
+  if (!updatedBoard) {
+    throw new httpErrors.NotFound(`Could not update board with id ${id}`);
+  }
 
-  return board;
+  return updatedBoard;
 };
 
 const remove = async id => {
-  const board = await DB.removeBoard(id);
+  const board = await DB.deleteEntity(TABLE_NAME, id);
 
-  if (!board) throw new Error('Could not remove board with id ${id}');
+  if (!board) {
+    throw new httpErrors.NotFound(`Could not remove board with id ${id}`);
+  }
 
   return board;
 };

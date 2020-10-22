@@ -1,74 +1,57 @@
 const router = require('express').Router();
 const Board = require('./board.model');
 const boardsService = require('./board.service');
+const { catchErrors } = require('../../common/middlewares/catchErrors');
 
-router.route('/').get(async (req, res) => {
-  try {
-    const boards = await boardsService.getAll();
+router
+  .route('/')
+  .get(
+    catchErrors(async (req, res) => {
+      const boards = await boardsService.getAll();
+      await res.status(200).json(boards);
+    })
+  )
+  .post(
+    catchErrors(async (req, res) => {
+      const board = new Board({
+        title: req.body.title,
+        columns: [...req.body.columns]
+      });
 
-    return res.status(200).send(boards);
-  } catch (error) {
-    return res.status(404).send('Boards not found');
-  }
-});
+      await res.status(200).send(await boardsService.create(board));
+    })
+  );
 
-router.route('/:id').get(async (req, res) => {
-  try {
-    const {
-      params: { id }
-    } = req;
+router
+  .route('/:id')
+  .get(
+    catchErrors(async (req, res) => {
+      const board = await boardsService.getById(req.params.id);
+      if (board) {
+        await res.status(200).send(board);
+      } else {
+        await res.sendStatus(404);
+      }
+    })
+  )
+  .put(
+    catchErrors(async (req, res) => {
+      const board = new Board({
+        id: req.params.id,
+        title: req.body.title,
+        columns: [...req.body.columns]
+      });
 
-    const board = await boardsService.getById(id);
-
-    return res.status(200).send(board);
-  } catch (error) {
-    const { message } = error;
-    return res.status(404).send(message);
-  }
-});
-
-router.route('/').post(async (req, res) => {
-  try {
-    const { body } = req;
-
-    const board = await boardsService.create(new Board({ ...body }));
-
-    return res.status(200).send(board);
-  } catch (error) {
-    const { message } = error;
-    return res.status(400).send(message);
-  }
-});
-
-router.route('/:id').put(async (req, res) => {
-  try {
-    const {
-      body,
-      params: { id }
-    } = req;
-
-    const board = await boardsService.update(id, body);
-
-    return res.status(200).send(board);
-  } catch (error) {
-    const { message } = error;
-    return res.status(400).send(message);
-  }
-});
-
-router.route('/:id').delete(async (req, res) => {
-  try {
-    const {
-      params: { id }
-    } = req;
-
-    const board = await boardsService.remove(id);
-
-    return res.status(204).send(board);
-  } catch (error) {
-    const { message } = error;
-    return res.status(404).send(message);
-  }
-});
+      await res
+        .status(200)
+        .send(await boardsService.update(req.params.id, board));
+    })
+  )
+  .delete(
+    catchErrors(async (req, res) => {
+      await boardsService.remove(req.params.id);
+      res.sendStatus(204);
+    })
+  );
 
 module.exports = router;

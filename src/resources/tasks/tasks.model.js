@@ -18,11 +18,6 @@ class Task {
     this.boardId = boardId;
     this.columnId = columnId;
   }
-
-  static toResponse(task) {
-    // TODO: implement
-    return task;
-  }
 }
 
 module.exports = Task;
