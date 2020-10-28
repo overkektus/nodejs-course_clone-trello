@@ -5,7 +5,10 @@ const catchErrors = fn => async (req, res, next) => {
     return await fn(req, res, next);
   } catch (error) {
     logger.error(`StatusCode ${error.status}, Message: ${error.message}`);
-    return res.status(error.status).send({ error: error.message });
+    if (error.status) {
+      return res.status(error.status).send({ error: error.message });
+    }
+    return res.sendStatus(500);
   }
 };
 
