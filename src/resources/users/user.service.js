@@ -1,19 +1,13 @@
-const userRepository = require('./user.repository');
-const tasksService = require('../tasks/tasks.service');
+const usersRepo = require('./user.db.repository');
+const tasksService = require('../tasks/task.service');
 
-const getAll = () => userRepository.getAll();
-
-const getById = id => userRepository.getById(id);
-
-const create = user => userRepository.create(user);
-
-const update = (id, user) => userRepository.update(id, user);
-
-const remove = async id => {
-  const isUserDelete = !!userRepository.remove(id);
-  if (isUserDelete) {
-    tasksService.resetUserId(id);
-  }
+const findAll = () => usersRepo.findAll();
+const findOne = id => usersRepo.findOne(id);
+const createOne = user => usersRepo.createOne(user);
+const updateOne = user => usersRepo.updateOne(user);
+const removeOne = id => {
+  const isUserDeleted = usersRepo.removeOne(id);
+  return isUserDeleted && tasksService.resetUserId(id);
 };
 
-module.exports = { getAll, getById, create, update, remove };
+module.exports = { findAll, findOne, createOne, updateOne, removeOne };

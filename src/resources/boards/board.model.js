@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const boardSchema = new mongoose.Schema(
   {
     title: String,
-    description: String,
     columns: Array
   },
   {

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const tasksSchema = new mongoose.Schema(
+const taskSchema = new mongoose.Schema(
   {
     title: String,
     order: Number,
@@ -20,6 +20,6 @@ const tasksSchema = new mongoose.Schema(
   }
 );
 
-const Tasks = mongoose.model('Tasks', tasksSchema);
+const Task = mongoose.model('Task', taskSchema);
 
-module.exports = Tasks;
+module.exports = Task;

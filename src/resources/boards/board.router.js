@@ -1,72 +1,68 @@
 const router = require('express').Router();
+const Board = require('./board.model');
 const boardsService = require('./board.service');
-const { catchErrors } = require('../../common/middlewares/catchErrors');
 
-router.post(
-  '/',
-  catchErrors(async (req, res) => {
-    const { body } = req;
-    const board = await boardsService.create(body);
-    await res.status(200).send(board);
-  })
-);
-
-router.get(
-  '/',
-  catchErrors(async (req, res) => {
-    const boards = await boardsService.getAll();
-    await res.status(200).json(boards);
-  })
-);
-
-router.get(
-  '/:id',
-  catchErrors(async (req, res) => {
-    const {
-      params: { id }
-    } = req;
-    const board = await boardsService.getById(id);
-    if (board) {
-      await res.status(200).send(board);
-    } else {
-      await res.sendStatus(404);
+router
+  .route('/')
+  .get(async (req, res, next) => {
+    try {
+      const boards = await boardsService.findAll();
+      res.status(200).send(boards);
+    } catch (err) {
+      next(err);
     }
   })
-);
-
-router.put(
-  '/:id',
-  catchErrors(async (req, res) => {
-    const {
-      params: { id },
-      body
-    } = req;
-
-    const updatedBoard = await boardsService.update(id, body);
-
-    if (!updatedBoard) {
-      return res.sendStatus(404);
+  .post(async (req, res, next) => {
+    try {
+      const board = new Board(req.body);
+      await boardsService.createOne(board);
+      res.status(200).send(board);
+    } catch (err) {
+      next(err);
     }
+  });
 
-    return res.status(200).send(updatedBoard);
-  })
-);
-
-router.delete(
-  '/:id',
-  catchErrors(async (req, res) => {
-    const {
-      params: { id }
-    } = req;
-
-    const isDeleted = await boardsService.remove(id);
-
-    if (!isDeleted) {
-      return res.sendStatus(404);
+router
+  .route('/:id')
+  .get(async (req, res, next) => {
+    try {
+      const board = await boardsService.findOne(req.params.id);
+      if (board) {
+        res.status(200).send(board);
+      } else {
+        res.sendStatus(404);
+      }
+    } catch (err) {
+      next(err);
     }
-
-    return res.sendStatus(204);
   })
-);
+  .put(async (req, res, next) => {
+    try {
+      const board = {
+        id: req.params.id,
+        ...req.body
+      };
+      const updateBoard = await boardsService.updateOne(board);
+      if (updateBoard) {
+        res.status(200).send(board);
+      } else {
+        res.sendStatus(400);
+      }
+    } catch (err) {
+      next(err);
+    }
+  })
+  .delete(async (req, res, next) => {
+    try {
+      const board = await boardsService.removeOne(req.params.id);
+      if (board) {
+        res.sendStatus(204);
+      } else {
+        res.sendStatus(404);
+      }
+    } catch (err) {
+      next(err);
+    }
+  });
 
 module.exports = router;

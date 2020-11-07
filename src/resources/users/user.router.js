@@ -1,64 +1,74 @@
 const router = require('express').Router();
+const bcrypt = require('bcrypt');
 const User = require('./user.model');
 const usersService = require('./user.service');
-const { catchErrors } = require('../../common/middlewares/catchErrors');
 
-router.post(
-  '/',
-  catchErrors(async (req, res) => {
-    const user = new User({
-      name: req.body.name,
-      login: req.body.login,
-      password: req.body.password
-    });
+const { BCRYPT_SALT } = require('../../common/config');
 
-    await res
-      .status(200)
-      .send(User.toResponse(await usersService.create(user)));
+router
+  .route('/')
+  .get(async (req, res, next) => {
+    try {
+      const users = await usersService.findAll();
+      res.status(200).send(users.map(User.toResponse));
+    } catch (err) {
+      next(err);
+    }
   })
-);
+  .post(async (req, res, next) => {
+    try {
+      const password = await bcrypt.hash(req.body.password, BCRYPT_SALT);
+      const user = await usersService.createOne({ ...req.body, password });
+      res.status(200).send(User.toResponse(user));
+    } catch (err) {
+      next(err);
+    }
+  });
 
-router.get(
-  '/',
-  catchErrors(async (req, res) => {
-    const users = await usersService.getAll();
-    await res.status(200).json(users.map(user => User.toResponse(user)));
+router
+  .route('/:id')
+  .get(async (req, res, next) => {
+    try {
+      const user = await usersService.findOne(req.params.id);
+      console.log(User.toResponse(user));
+      if (user) {
+        res.status(200).send(User.toResponse(user));
+      } else {
+        res.sendStatus(404);
+      }
+    } catch (err) {
+      next(err);
+    }
   })
-);
-
-router.get(
-  '/:id',
-  catchErrors(async (req, res) => {
-    const user = await usersService.getById(req.params.id);
-    await res.status(200).send(User.toResponse(user));
+  .put(async (req, res, next) => {
+    try {
+      const password = await bcrypt.hash(req.body.password, BCRYPT_SALT);
+      const user = {
+        ...req.body,
+        id: req.params.id,
+        password
+      };
+      const isUpdated = await usersService.updateOne(user);
+      if (isUpdated) {
+        res.status(200).send(User.toResponse(user));
+      } else {
+        res.sendStatus(400);
+      }
+    } catch (err) {
+      next(err);
+    }
   })
-);
-
-router.put(
-  '/:id',
-  catchErrors(async (req, res) => {
-    const {
-      body,
-      params: { id }
-    } = req;
-
-    const updatedUser = await usersService.update(id, body);
-
-    console.log(updatedUser);
-
-    await res.status(200).send(User.toResponse(updatedUser));
-  })
-);
-
-router.delete(
-  '/:id',
-  catchErrors(async (req, res) => {
-    const {
-      params: { id }
-    } = req;
-    await usersService.remove(id);
-    await res.sendStatus(204);
-  })
-);
+  .delete(async (req, res, next) => {
+    try {
+      const user = await usersService.removeOne(req.params.id);
+      if (user) {
+        res.sendStatus(204);
+      } else {
+        res.sendStatus(404);
+      }
+    } catch (err) {
+      next(err);
+    }
+  });
 
 module.exports = router;
